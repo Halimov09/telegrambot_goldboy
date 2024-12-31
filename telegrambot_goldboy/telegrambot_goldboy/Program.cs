@@ -1,98 +1,51 @@
-﻿using System;
-using Telegram.Bot;
-using Telegram.Bot.Polling;
+﻿using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
-using Telegram.Bot.Types.ReplyMarkups;
 
-public class Program
+class Program
 {
-    private static TelegramBotClient TelegramBot;
-    private const string startCommand = "/start";
-    private const string businesOwner = "Biznes egasi";
-    private const string istemolchi = "Istemolchi";
-    private static void Main(string[] args)
-    {
-        string token = @"7845781687:AAFCT8XzM8ZhKQkZJT2pKbtUERvuKn2VETc";
-        TelegramBot = new TelegramBotClient(token);
-        
-        TelegramBot.StartReceiving(HandlelUpdate, HandlelError);
+    private static ITelegramBotClient botClient = new TelegramBotClient("7845781687:AAFCT8XzM8ZhKQkZJT2pKbtUERvuKn2VETc");  // Tokenni shu yerga yozing
+    private static ReferralService referralService = new ReferralService();
 
+    static async Task Main(string[] args)
+    {
+        Console.WriteLine("Bot ishga tushdi...");
+
+        botClient.StartReceiving(HandleUpdateAsync, HandleErrorAsync);
+
+        Console.WriteLine("Bot ishlamoqda. Xabarlarni kutyapman...");
         Console.ReadLine();
     }
 
-    private static async Task HandlelError(ITelegramBotClient client, Exception exception, HandleErrorSource source, CancellationToken token)
+    private static async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
     {
-        await client.SendTextMessageAsync(
-            chatId: 1004979323,
-            $"Error: {exception.Message}");
-    }
-
-    private static async Task HandlelUpdate(ITelegramBotClient client, Update update, CancellationToken token)
-    {
-        if (true)
+        if (update.Type == UpdateType.Message && update.Message?.Text != null)
         {
-            if (update.Message.Text is startCommand)
-            {
-                var markup = menuMarkUp();
+            var message = update.Message;
+            Console.WriteLine($"Xabar keldi: {message.Text} | Foydalanuvchi: {message.Chat.Id}");
 
-                await client.SendTextMessageAsync(
-                    chatId: update.Message.Chat.Id,
-                    text: "Welcome",
-                    replyMarkup: markup);
+            string filePath = "data.json"; // JSON fayl yo‘li
 
-                await client.SendTextMessageAsync(
-                chatId: 1004979323,
-                $"foydalanuvchi malumotlari:\n" +
-                $"Ism: {update.Message.Chat.FirstName}\n" +
-                $"Familiya: {update.Message.Chat.LastName ?? "Familiya kiritilmagan"}\n" +
-                $"Chat ID: {update.Message.Chat.Id}\n"+
-                $"Username: @{update.Message.Chat.Username}" ?? "Username mavjud emas");
-            }
-            if (update.Message?.Text == "Biznes egasi")
+            if (message.Text == "/start")
             {
-                // Telefon raqamini so'rash tugmasi
-                var requestContactKeyboard = new ReplyKeyboardMarkup(new[]
+                string response = "Assalomu alaykum! Botga xush kelibsiz.\nDo'stlaringizni taklif qiling va mukofot oling!";
+                await botClient.SendTextMessageAsync(message.Chat.Id, response);
+
+                // Foydalanuvchini JSON faylga saqlash
+                User newUser = new User
                 {
-                new KeyboardButton("📱 Telefon raqamni yuborish") { RequestContact = true }
-            })
-                {
-                    ResizeKeyboard = true,
-                    OneTimeKeyboard = true
+                    ChatId = message.Chat.Id,
+                    Username = message.Chat.Username ?? "Noma'lum"
                 };
-
-                await client.SendTextMessageAsync(
-                    chatId: update.Message.Chat.Id,
-                    text: "Telefon raqamingizni yuborish uchun tugmani bosing:",
-                    replyMarkup: requestContactKeyboard
-                );
+                SaveUserToFile(newUser, filePath);
             }
-            else if (update.Message?.Contact != null)
-            {
-                // Telefon raqami yuborilganda
-                string phoneNumber = update.Message.Contact.PhoneNumber;
-
-                await client.SendTextMessageAsync(
-                    chatId: 1004979323,
-                    text: $"Foydalanuvchi Telefon raqami: {phoneNumber}",
-                    replyMarkup: new ReplyKeyboardRemove() // Tugmalarni olib tashlash
-                );
-            }
-        }
-        else
-        {
-            await client.SendTextMessageAsync(
-            chatId: update.Message.Chat.Id,
-            $"Please send me only text.");
         }
     }
 
-    private static ReplyKeyboardMarkup menuMarkUp()
+
+    private static Task HandleErrorAsync(ITelegramBotClient botClient, Exception exception, CancellationToken cancellationToken)
     {
-        return new ReplyKeyboardMarkup(new KeyboardButton[][]
-        {new KeyboardButton[]{new KeyboardButton("Biznes egasi"), new KeyboardButton("Istemolchi") { RequestContact = true } } })
-        { 
-            ResizeKeyboard = true 
-        };
+        Console.WriteLine($"Xatolik: {exception.Message}");
+        return Task.CompletedTask;
     }
 }
