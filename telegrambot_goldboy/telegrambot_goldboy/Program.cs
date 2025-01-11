@@ -5,7 +5,6 @@ using Telegram.Bot.Types.Enums;
 class Program
 {
     private static ITelegramBotClient botClient = new TelegramBotClient("7845781687:AAFCT8XzM8ZhKQkZJT2pKbtUERvuKn2VETc");  // Tokenni shu yerga yozing
-    private static ReferralService referralService = new ReferralService();
 
     static async Task Main(string[] args)
     {
@@ -37,7 +36,6 @@ class Program
                     ChatId = message.Chat.Id,
                     Username = message.Chat.Username ?? "Noma'lum"
                 };
-                SaveUserToFile(newUser, filePath);
             }
         }
     }
