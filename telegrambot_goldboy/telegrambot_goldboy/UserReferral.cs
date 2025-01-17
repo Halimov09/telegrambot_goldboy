@@ -9,7 +9,6 @@ namespace telegrambot_goldboy
     public class UserReferral
     {
         public string UserId { get; set; }  // Foydalanuvchi ID'si
-        public int ReferralsCount { get; set; }  // Taklif qilingan do'stlar soni
     }
 
 }
